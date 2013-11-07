@@ -654,6 +654,19 @@ func postContainersStart(srv *Server, version float64, w http.ResponseWriter, r 
 		return fmt.Errorf("Missing parameter")
 	}
 	name := vars["name"]
+	
+	// Load host config from disk if not provided
+	if hostConfig == nil {
+		container, err := srv.ContainerInspect(name)
+		if err != nil {
+			return err
+		}
+		if err := container.readHostConfig(); err != nil {
+			return err
+		}
+		hostConfig = container.hostConfig
+	}
+
 	// Register any links from the host config before starting the container
 	if err := srv.RegisterLinks(name, hostConfig); err != nil {
 		return err
